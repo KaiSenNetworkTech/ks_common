@@ -6,6 +6,7 @@ public enum ResultEnum {
 	IO_ERROR(2, "I/O异常"),
 	PARAMS_ERROR(3, "参数错误"),
 	INTERNAL_ERROR(4,"服务器内部错误"),
+	NOT_LOGIN_ERROR(5, "用户未登录"),
 	REGISTER_PARAMS_ERROR(1000, "注册信息不完整"),
 	MOBILE_PHONE_NO_ALREADY_EXISTS(1001, "手机号已被注册,请尝试登陆或找回密码"),
 	MOBILE_PHONE_NO_NOT_EXISTS(1002, "手机号不存在"),
