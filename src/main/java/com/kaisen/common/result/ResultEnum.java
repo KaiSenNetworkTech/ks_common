@@ -16,7 +16,10 @@ public enum ResultEnum {
 	MOBILE_PHONE_NO_OR_PASSWORD_NULL(1003, "手机号和密码不能为空"),
 	MOBILE_PHONE_NO_OR_PASSWORD_ERROR(1004, "手机号或密码错误"),
 	OLD_PASSWORD_ERROR(1005, "原密码错误"),
-	PASSWORD_FORMAT_ERROR(1006, "密码格式错误");
+	PASSWORD_FORMAT_ERROR(1006, "密码格式错误"),
+	MOBILE_PHONE_NO_IS_NULL(1007, "手机号不能为空"),
+	MOBILE_PHONE_NO_FORMAT_ERROR(1008, "手机号格式错误"),
+	SEND_SMS_CAPTCHA_FAILED(1009, "验证码发送失败，请稍后重试");
 	
 	private Integer resultCode; // 错误码
 	private String message; // 错误信息
