@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 public class CallServiceResult<T> implements Serializable {
 	private static final long serialVersionUID = -6162700658277353549L;
-	private ResultEnum resultEnum;
+	private ResultEnum resultEnum = ResultEnum.SUCCESS;
 	private T returnObject;
 
 	public ResultEnum getResultEnum() {
