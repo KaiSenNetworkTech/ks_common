@@ -42,7 +42,8 @@ public class PageInterceptor implements Interceptor {
 					.getFieldValue(delegate, "mappedStatement");
 			Connection connection = (Connection) invocation.getArgs()[0];
 			String sql = boundSql.getSql();
-			this.settotalCount(page, mappedStatement, connection);
+			if (page.isNeedTotalCount())
+				this.settotalCount(page, mappedStatement, connection);
 			String pageSql = this.getPageSql(page, sql);
 			ReflectUtil.setFieldValue(boundSql, "sql", pageSql);
 		}

@@ -23,6 +23,16 @@ public class Page<T> implements Paginable<T>, Serializable {
 
 	private String orderStr;
 
+	private boolean isNeedTotalCount = true;
+
+	public boolean isNeedTotalCount() {
+		return isNeedTotalCount;
+	}
+
+	public void setNeedTotalCount(boolean isNeedTotalCount) {
+		this.isNeedTotalCount = isNeedTotalCount;
+	}
+
 	public int getPageNo() {
 		return pageNo;
 	}
