@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.TimeoutException;
 
+import javax.annotation.PostConstruct;
+
 import net.rubyeye.xmemcached.CASOperation;
 import net.rubyeye.xmemcached.Counter;
 import net.rubyeye.xmemcached.GetsResponse;
@@ -22,8 +24,37 @@ import net.rubyeye.xmemcached.networking.Connector;
 import net.rubyeye.xmemcached.transcoders.Transcoder;
 import net.rubyeye.xmemcached.utils.Protocol;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public abstract class BaseCache<T> {
 	protected abstract MemcachedClient getMemcachedClient();
+
+	protected abstract int getExpirationTime();
+
+	@PostConstruct
+	private void setKeyProvider() {
+		getMemcachedClient().setKeyProvider(
+				new DefaultKeyProvider(this.getClass().getName()));
+	}
+
+	private class DefaultKeyProvider implements KeyProvider {
+		private String className;
+		private StringBuilder keyBuilder = new StringBuilder(32);
+
+		public DefaultKeyProvider(String className) {
+			this.className = className;
+			keyBuilder.append(this.className).append(":");
+		}
+
+		@Override
+		public String process(String key) {
+			return keyBuilder.append(key).toString();
+		}
+	}
+
+	private static final Logger logger = LoggerFactory
+			.getLogger(BaseCache.class);
 
 	/**
 	 * Set the merge factor,this factor determins how many 'get' commands would
@@ -98,9 +129,12 @@ public abstract class BaseCache<T> {
 	 * @param port
 	 *            port number
 	 */
-	public void addServer(final String server, final int port)
-			throws IOException {
-		getMemcachedClient().addServer(server, port);
+	public void addServer(final String server, final int port) {
+		try {
+			getMemcachedClient().addServer(server, port);
+		} catch (IOException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -110,9 +144,12 @@ public abstract class BaseCache<T> {
 	 * @param inetSocketAddress
 	 *            memcached server's socket address
 	 */
-	public void addServer(final InetSocketAddress inetSocketAddress)
-			throws IOException {
-		getMemcachedClient().addServer(inetSocketAddress);
+	public void addServer(final InetSocketAddress inetSocketAddress) {
+		try {
+			getMemcachedClient().addServer(inetSocketAddress);
+		} catch (IOException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -122,8 +159,12 @@ public abstract class BaseCache<T> {
 	 * @param host
 	 *            String like [host1]:[port1] [host2]:[port2] ...
 	 */
-	public void addServer(String hostList) throws IOException {
-		getMemcachedClient().addServer(hostList);
+	public void addServer(String hostList) {
+		try {
+			getMemcachedClient().addServer(hostList);
+		} catch (IOException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -159,14 +200,22 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public T get(final String key, final long timeout) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		return getMemcachedClient().get(key, timeout);
+	public T get(final String key, final long timeout) {
+		try {
+			return getMemcachedClient().get(key, timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
-	public T get(final String key) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		return getMemcachedClient().get(key);
+	public T get(final String key) {
+		try {
+			return getMemcachedClient().get(key);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -185,9 +234,13 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public GetsResponse<T> gets(final String key) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		return getMemcachedClient().gets(key);
+	public GetsResponse<T> gets(final String key) {
+		try {
+			return getMemcachedClient().gets(key);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -200,9 +253,13 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public GetsResponse<T> gets(final String key, final long timeout)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().gets(key, timeout);
+	public GetsResponse<T> gets(final String key, final long timeout) {
+		try {
+			return getMemcachedClient().gets(key, timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -214,9 +271,13 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public Map<String, T> get(final Collection<String> keyCollections)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().get(keyCollections);
+	public Map<String, T> get(final Collection<String> keyCollections) {
+		try {
+			return getMemcachedClient().get(keyCollections);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -230,9 +291,13 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public Map<String, T> get(final Collection<String> keyCollections,
-			final long timeout) throws TimeoutException, InterruptedException,
-			MemcachedException {
-		return getMemcachedClient().get(keyCollections, timeout);
+			final long timeout) {
+		try {
+			return getMemcachedClient().get(keyCollections, timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -252,9 +317,13 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public Map<String, GetsResponse<T>> gets(
-			final Collection<String> keyCollections) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		return getMemcachedClient().gets(keyCollections);
+			final Collection<String> keyCollections) {
+		try {
+			return getMemcachedClient().gets(keyCollections);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -268,9 +337,13 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public Map<String, GetsResponse<T>> gets(
-			final Collection<String> keyCollections, final long timeout)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().gets(keyCollections, timeout);
+			final Collection<String> keyCollections, final long timeout) {
+		try {
+			return getMemcachedClient().gets(keyCollections, timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -293,18 +366,44 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public boolean set(final String key, final int exp, final Object value)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().set(key, exp, value);
+	public boolean set(final String key, final int exp, final Object value) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().set(key, exp, value);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
+	}
+
+	public boolean set(final String key, final Object value) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().set(key, getExpirationTime(), value);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
 	 * @see #set(String, int, Object, Transcoder, long)
 	 */
 	public boolean set(final String key, final int exp, final Object value,
-			final long timeout) throws TimeoutException, InterruptedException,
-			MemcachedException {
-		return getMemcachedClient().set(key, exp, value, timeout);
+			final long timeout) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().set(key, exp, value, timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -325,8 +424,27 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public void setWithNoReply(final String key, final int exp,
-			final Object value) throws InterruptedException, MemcachedException {
-		getMemcachedClient().setWithNoReply(key, exp, value);
+			final Object value) {
+		if (value == null)
+			return;
+
+		try {
+			getMemcachedClient().setWithNoReply(key, exp, value);
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
+	}
+
+	public void setWithNoReply(final String key, final Object value) {
+		if (value == null)
+			return;
+
+		try {
+			getMemcachedClient()
+					.setWithNoReply(key, getExpirationTime(), value);
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -346,9 +464,28 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public boolean add(final String key, final int exp, final Object value)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().add(key, exp, value);
+	public boolean add(final String key, final int exp, final Object value) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().add(key, exp, value);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
+	}
+
+	public boolean add(final String key, final Object value) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().add(key, getExpirationTime(), value);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -363,9 +500,16 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public boolean add(final String key, final int exp, final Object value,
-			final long timeout) throws TimeoutException, InterruptedException,
-			MemcachedException {
-		return getMemcachedClient().add(key, exp, value, timeout);
+			final long timeout) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().add(key, exp, value, timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -384,10 +528,28 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-
 	public void addWithNoReply(final String key, final int exp,
-			final Object value) throws InterruptedException, MemcachedException {
-		getMemcachedClient().addWithNoReply(key, exp, value);
+			final Object value) {
+		if (value == null)
+			return;
+
+		try {
+			getMemcachedClient().addWithNoReply(key, exp, value);
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
+	}
+
+	public void addWithNoReply(final String key, final Object value) {
+		if (value == null)
+			return;
+
+		try {
+			getMemcachedClient()
+					.addWithNoReply(key, getExpirationTime(), value);
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -407,9 +569,29 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public boolean replace(final String key, final int exp, final Object value)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().replace(key, exp, value);
+	public boolean replace(final String key, final int exp, final Object value) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().replace(key, exp, value);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
+	}
+
+	public boolean replace(final String key, final Object value) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient()
+					.replace(key, getExpirationTime(), value);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -424,9 +606,16 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public boolean replace(final String key, final int exp, final Object value,
-			final long timeout) throws TimeoutException, InterruptedException,
-			MemcachedException {
-		return getMemcachedClient().replace(key, exp, value, timeout);
+			final long timeout) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().replace(key, exp, value, timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -446,8 +635,27 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public void replaceWithNoReply(final String key, final int exp,
-			final Object value) throws InterruptedException, MemcachedException {
-		getMemcachedClient().replaceWithNoReply(key, exp, value);
+			final Object value) {
+		if (value == null)
+			return;
+
+		try {
+			getMemcachedClient().replaceWithNoReply(key, exp, value);
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
+	}
+
+	public void replaceWithNoReply(final String key, final Object value) {
+		if (value == null)
+			return;
+
+		try {
+			getMemcachedClient().replaceWithNoReply(key, getExpirationTime(),
+					value);
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -459,9 +667,16 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public boolean append(final String key, final Object value)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().append(key, value);
+	public boolean append(final String key, final Object value) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().append(key, value);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -476,9 +691,16 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public boolean append(final String key, final Object value,
-			final long timeout) throws TimeoutException, InterruptedException,
-			MemcachedException {
-		return getMemcachedClient().append(key, value, timeout);
+			final long timeout) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().append(key, value, timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -490,9 +712,15 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public void appendWithNoReply(final String key, final Object value)
-			throws InterruptedException, MemcachedException {
-		getMemcachedClient().appendWithNoReply(key, value);
+	public void appendWithNoReply(final String key, final Object value) {
+		if (value == null)
+			return;
+
+		try {
+			getMemcachedClient().appendWithNoReply(key, value);
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -504,9 +732,16 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public boolean prepend(final String key, final Object value)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().prepend(key, value);
+	public boolean prepend(final String key, final Object value) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().prepend(key, value);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -521,9 +756,16 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public boolean prepend(final String key, final Object value,
-			final long timeout) throws TimeoutException, InterruptedException,
-			MemcachedException {
-		return getMemcachedClient().prepend(key, value, timeout);
+			final long timeout) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().prepend(key, value, timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -537,9 +779,15 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public void prependWithNoReply(final String key, final Object value)
-			throws InterruptedException, MemcachedException {
-		getMemcachedClient().prependWithNoReply(key, value);
+	public void prependWithNoReply(final String key, final Object value) {
+		if (value == null)
+			return;
+
+		try {
+			getMemcachedClient().prependWithNoReply(key, value);
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -554,9 +802,16 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public boolean cas(final String key, final int exp, final Object value,
-			final long cas) throws TimeoutException, InterruptedException,
-			MemcachedException {
-		return getMemcachedClient().cas(key, exp, value, cas);
+			final long cas) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().cas(key, exp, value, cas);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -578,9 +833,16 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public boolean cas(final String key, final int exp, final Object value,
-			final long timeout, final long cas) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		return getMemcachedClient().cas(key, exp, value, timeout, cas);
+			final long timeout, final long cas) {
+		if (value == null)
+			return false;
+
+		try {
+			return getMemcachedClient().cas(key, exp, value, timeout, cas);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -603,9 +865,13 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public boolean cas(final String key, final int exp,
-			GetsResponse<T> getsReponse, final CASOperation<T> operation)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().cas(key, exp, getsReponse, operation);
+			GetsResponse<T> getsReponse, final CASOperation<T> operation) {
+		try {
+			return getMemcachedClient().cas(key, exp, getsReponse, operation);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -620,9 +886,13 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public boolean cas(final String key, GetsResponse<T> getsResponse,
-			final CASOperation<T> operation) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		return getMemcachedClient().cas(key, getsResponse, operation);
+			final CASOperation<T> operation) {
+		try {
+			return getMemcachedClient().cas(key, getsResponse, operation);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -637,9 +907,13 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public boolean cas(final String key, final int exp,
-			final CASOperation<T> operation) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		return getMemcachedClient().cas(key, exp, operation);
+			final CASOperation<T> operation) {
+		try {
+			return getMemcachedClient().cas(key, exp, operation);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -652,9 +926,13 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public boolean cas(final String key, final CASOperation<T> operation)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().cas(key, operation);
+	public boolean cas(final String key, final CASOperation<T> operation) {
+		try {
+			return getMemcachedClient().cas(key, operation);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -669,9 +947,12 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public void casWithNoReply(final String key, GetsResponse<T> getsResponse,
-			final CASOperation<T> operation) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		getMemcachedClient().casWithNoReply(key, getsResponse, operation);
+			final CASOperation<T> operation) {
+		try {
+			getMemcachedClient().casWithNoReply(key, getsResponse, operation);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -687,9 +968,13 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public void casWithNoReply(final String key, final int exp,
-			GetsResponse<T> getsReponse, final CASOperation<T> operation)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		getMemcachedClient().casWithNoReply(key, exp, getsReponse, operation);
+			GetsResponse<T> getsReponse, final CASOperation<T> operation) {
+		try {
+			getMemcachedClient().casWithNoReply(key, exp, getsReponse,
+					operation);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -703,9 +988,12 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public void casWithNoReply(final String key, final int exp,
-			final CASOperation<T> operation) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		getMemcachedClient().casWithNoReply(key, exp, operation);
+			final CASOperation<T> operation) {
+		try {
+			getMemcachedClient().casWithNoReply(key, exp, operation);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -717,9 +1005,12 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public void casWithNoReply(final String key, final CASOperation<T> operation)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		getMemcachedClient().casWithNoReply(key, operation);
+	public void casWithNoReply(final String key, final CASOperation<T> operation) {
+		try {
+			getMemcachedClient().casWithNoReply(key, operation);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -734,9 +1025,13 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 * @since 1.3.2
 	 */
-	public boolean delete(final String key, long opTimeout)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().delete(key, opTimeout);
+	public boolean delete(final String key, long opTimeout) {
+		try {
+			return getMemcachedClient().delete(key, opTimeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -754,9 +1049,13 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 * @since 1.3.2
 	 */
-	public boolean delete(final String key, long cas, long opTimeout)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().delete(key, cas, opTimeout);
+	public boolean delete(final String key, long cas, long opTimeout) {
+		try {
+			return getMemcachedClient().delete(key, cas, opTimeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -774,9 +1073,13 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public boolean touch(final String key, int exp, long opTimeout)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().touch(key, exp, opTimeout);
+	public boolean touch(final String key, int exp, long opTimeout) {
+		try {
+			return getMemcachedClient().touch(key, exp, opTimeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -793,9 +1096,13 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public boolean touch(final String key, int exp) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		return getMemcachedClient().touch(key, exp);
+	public boolean touch(final String key, int exp) {
+		try {
+			return getMemcachedClient().touch(key, exp);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	/**
@@ -814,9 +1121,13 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public T getAndTouch(final String key, int newExp, long opTimeout)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().getAndTouch(key, newExp, opTimeout);
+	public T getAndTouch(final String key, int newExp, long opTimeout) {
+		try {
+			return getMemcachedClient().getAndTouch(key, newExp, opTimeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -830,9 +1141,13 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public T getAndTouch(final String key, int newExp) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		return getMemcachedClient().getAndTouch(key, newExp);
+	public T getAndTouch(final String key, int newExp) {
+		try {
+			return getMemcachedClient().getAndTouch(key, newExp);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -843,9 +1158,13 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public Map<InetSocketAddress, String> getVersions()
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().getVersions();
+	public Map<InetSocketAddress, String> getVersions() {
+		try {
+			return getMemcachedClient().getVersions();
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -864,14 +1183,22 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public long incr(final String key, final long delta)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().incr(key, delta);
+	public long incr(final String key, final long delta) {
+		try {
+			return getMemcachedClient().incr(key, delta);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return -1;
+		}
 	}
 
-	public long incr(final String key, final long delta, final long initValue)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().incr(key, delta, initValue);
+	public long incr(final String key, final long delta, final long initValue) {
+		try {
+			return getMemcachedClient().incr(key, delta, initValue);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return -1;
+		}
 	}
 
 	/**
@@ -897,9 +1224,13 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public long incr(final String key, final long delta, final long initValue,
-			long timeout) throws TimeoutException, InterruptedException,
-			MemcachedException {
-		return getMemcachedClient().incr(key, delta, initValue, timeout);
+			long timeout) {
+		try {
+			return getMemcachedClient().incr(key, delta, initValue, timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return -1;
+		}
 	}
 
 	/**
@@ -918,9 +1249,13 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public long decr(final String key, final long delta)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().decr(key, delta);
+	public long decr(final String key, final long delta) {
+		try {
+			return getMemcachedClient().decr(key, delta);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return -1;
+		}
 	}
 
 	/**
@@ -933,9 +1268,13 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public long decr(final String key, final long delta, long initValue)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().decr(key, delta, initValue);
+	public long decr(final String key, final long delta, long initValue) {
+		try {
+			return getMemcachedClient().decr(key, delta, initValue);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return -1;
+		}
 	}
 
 	/**
@@ -961,9 +1300,13 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public long decr(final String key, final long delta, long initValue,
-			long timeout) throws TimeoutException, InterruptedException,
-			MemcachedException {
-		return getMemcachedClient().decr(key, delta, initValue, timeout);
+			long timeout) {
+		try {
+			return getMemcachedClient().decr(key, delta, initValue, timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return -1;
+		}
 	}
 
 	/**
@@ -973,14 +1316,20 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public void flushAll() throws TimeoutException, InterruptedException,
-			MemcachedException {
-		getMemcachedClient().flushAll();
+	public void flushAll() {
+		try {
+			getMemcachedClient().flushAll();
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
-	public void flushAllWithNoReply() throws InterruptedException,
-			MemcachedException {
-		getMemcachedClient().flushAllWithNoReply();
+	public void flushAllWithNoReply() {
+		try {
+			getMemcachedClient().flushAllWithNoReply();
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -992,9 +1341,12 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public void flushAll(long timeout) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		getMemcachedClient().flushAll(timeout);
+	public void flushAll(long timeout) {
+		try {
+			getMemcachedClient().flushAll(timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -1008,19 +1360,28 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public void flushAll(InetSocketAddress address) throws MemcachedException,
-			InterruptedException, TimeoutException {
-		getMemcachedClient().flushAll(address);
+	public void flushAll(InetSocketAddress address) {
+		try {
+			getMemcachedClient().flushAll(address);
+		} catch (MemcachedException | InterruptedException | TimeoutException e) {
+			logger.error("", e);
+		}
 	}
 
-	public void flushAllWithNoReply(InetSocketAddress address)
-			throws MemcachedException, InterruptedException {
-		getMemcachedClient().flushAllWithNoReply(address);
+	public void flushAllWithNoReply(InetSocketAddress address) {
+		try {
+			getMemcachedClient().flushAllWithNoReply(address);
+		} catch (MemcachedException | InterruptedException e) {
+			logger.error("", e);
+		}
 	}
 
-	public void flushAll(InetSocketAddress address, long timeout)
-			throws MemcachedException, InterruptedException, TimeoutException {
-		getMemcachedClient().flushAll(address, timeout);
+	public void flushAll(InetSocketAddress address, long timeout) {
+		try {
+			getMemcachedClient().flushAll(address, timeout);
+		} catch (MemcachedException | InterruptedException | TimeoutException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -1031,9 +1392,13 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws TimeoutException
 	 */
-	public Map<String, String> stats(InetSocketAddress address, long timeout)
-			throws MemcachedException, InterruptedException, TimeoutException {
-		return getMemcachedClient().stats(address, timeout);
+	public Map<String, String> stats(InetSocketAddress address, long timeout) {
+		try {
+			return getMemcachedClient().stats(address, timeout);
+		} catch (MemcachedException | InterruptedException | TimeoutException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -1045,14 +1410,22 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws TimeoutException
 	 */
-	public Map<InetSocketAddress, Map<String, String>> getStats(long timeout)
-			throws MemcachedException, InterruptedException, TimeoutException {
-		return getMemcachedClient().getStats(timeout);
+	public Map<InetSocketAddress, Map<String, String>> getStats(long timeout) {
+		try {
+			return getMemcachedClient().getStats(timeout);
+		} catch (MemcachedException | InterruptedException | TimeoutException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
-	public Map<InetSocketAddress, Map<String, String>> getStats()
-			throws MemcachedException, InterruptedException, TimeoutException {
-		return getMemcachedClient().getStats();
+	public Map<InetSocketAddress, Map<String, String>> getStats() {
+		try {
+			return getMemcachedClient().getStats();
+		} catch (MemcachedException | InterruptedException | TimeoutException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -1062,24 +1435,40 @@ public abstract class BaseCache<T> {
 	 * @return
 	 */
 	public Map<InetSocketAddress, Map<String, String>> getStatsByItem(
-			String itemName) throws MemcachedException, InterruptedException,
-			TimeoutException {
-		return getMemcachedClient().getStatsByItem(itemName);
+			String itemName) {
+		try {
+			return getMemcachedClient().getStatsByItem(itemName);
+		} catch (MemcachedException | InterruptedException | TimeoutException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
-	public void shutdown() throws IOException {
-		getMemcachedClient().shutdown();
+	public void shutdown() {
+		try {
+			getMemcachedClient().shutdown();
+		} catch (IOException e) {
+			logger.error("", e);
+		}
 	}
 
-	public boolean delete(final String key) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		return getMemcachedClient().delete(key);
+	public boolean delete(final String key) {
+		try {
+			return getMemcachedClient().delete(key);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return false;
+		}
 	}
 
 	public Map<InetSocketAddress, Map<String, String>> getStatsByItem(
-			String itemName, long timeout) throws MemcachedException,
-			InterruptedException, TimeoutException {
-		return getMemcachedClient().getStatsByItem(itemName, timeout);
+			String itemName, long timeout) {
+		try {
+			return getMemcachedClient().getStatsByItem(itemName, timeout);
+		} catch (MemcachedException | InterruptedException | TimeoutException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -1100,9 +1489,13 @@ public abstract class BaseCache<T> {
 		getMemcachedClient().setOpTimeout(opTimeout);
 	}
 
-	public Map<InetSocketAddress, String> getVersions(long timeout)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().getVersions(timeout);
+	public Map<InetSocketAddress, String> getVersions(long timeout) {
+		try {
+			return getMemcachedClient().getVersions(timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 
 	/**
@@ -1122,14 +1515,20 @@ public abstract class BaseCache<T> {
 	 * @param weight
 	 * @throws IOException
 	 */
-	public void addServer(final String server, final int port, int weight)
-			throws IOException {
-		getMemcachedClient().addServer(server, port, weight);
+	public void addServer(final String server, final int port, int weight) {
+		try {
+			getMemcachedClient().addServer(server, port, weight);
+		} catch (IOException e) {
+			logger.error("", e);
+		}
 	}
 
-	public void addServer(final InetSocketAddress inetSocketAddress, int weight)
-			throws IOException {
-		getMemcachedClient().addServer(inetSocketAddress, weight);
+	public void addServer(final InetSocketAddress inetSocketAddress, int weight) {
+		try {
+			getMemcachedClient().addServer(inetSocketAddress, weight);
+		} catch (IOException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -1145,9 +1544,12 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public void deleteWithNoReply(final String key)
-			throws InterruptedException, MemcachedException {
-		getMemcachedClient().deleteWithNoReply(key);
+	public void deleteWithNoReply(final String key) {
+		try {
+			getMemcachedClient().deleteWithNoReply(key);
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -1164,9 +1566,12 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public void incrWithNoReply(final String key, final long delta)
-			throws InterruptedException, MemcachedException {
-		getMemcachedClient().incrWithNoReply(key, delta);
+	public void incrWithNoReply(final String key, final long delta) {
+		try {
+			getMemcachedClient().incrWithNoReply(key, delta);
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -1183,9 +1588,12 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public void decrWithNoReply(final String key, final long delta)
-			throws InterruptedException, MemcachedException {
-		getMemcachedClient().decrWithNoReply(key, delta);
+	public void decrWithNoReply(final String key, final long delta) {
+		try {
+			getMemcachedClient().decrWithNoReply(key, delta);
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -1199,9 +1607,12 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	public void setLoggingLevelVerbosity(InetSocketAddress address, int level)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		getMemcachedClient().setLoggingLevelVerbosity(address, level);
+	public void setLoggingLevelVerbosity(InetSocketAddress address, int level) {
+		try {
+			getMemcachedClient().setLoggingLevelVerbosity(address, level);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -1216,9 +1627,13 @@ public abstract class BaseCache<T> {
 	 * @throws MemcachedException
 	 */
 	public void setLoggingLevelVerbosityWithNoReply(InetSocketAddress address,
-			int level) throws InterruptedException, MemcachedException {
-		getMemcachedClient()
-				.setLoggingLevelVerbosityWithNoReply(address, level);
+			int level) {
+		try {
+			getMemcachedClient().setLoggingLevelVerbosityWithNoReply(address,
+					level);
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -1248,24 +1663,36 @@ public abstract class BaseCache<T> {
 		return getMemcachedClient().getStateListeners();
 	}
 
-	public void flushAllWithNoReply(int exptime) throws InterruptedException,
-			MemcachedException {
-		getMemcachedClient().flushAllWithNoReply(exptime);
+	public void flushAllWithNoReply(int exptime) {
+		try {
+			getMemcachedClient().flushAllWithNoReply(exptime);
+		} catch (InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
-	public void flushAll(int exptime, long timeout) throws TimeoutException,
-			InterruptedException, MemcachedException {
-		getMemcachedClient().flushAll(exptime, timeout);
+	public void flushAll(int exptime, long timeout) {
+		try {
+			getMemcachedClient().flushAll(exptime, timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+		}
 	}
 
-	public void flushAllWithNoReply(InetSocketAddress address, int exptime)
-			throws MemcachedException, InterruptedException {
-		getMemcachedClient().flushAllWithNoReply(address, exptime);
+	public void flushAllWithNoReply(InetSocketAddress address, int exptime) {
+		try {
+			getMemcachedClient().flushAllWithNoReply(address, exptime);
+		} catch (MemcachedException | InterruptedException e) {
+			logger.error("", e);
+		}
 	}
 
-	public void flushAll(InetSocketAddress address, long timeout, int exptime)
-			throws MemcachedException, InterruptedException, TimeoutException {
-		getMemcachedClient().flushAll(address, timeout, exptime);
+	public void flushAll(InetSocketAddress address, long timeout, int exptime) {
+		try {
+			getMemcachedClient().flushAll(address, timeout, exptime);
+		} catch (MemcachedException | InterruptedException | TimeoutException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -1421,9 +1848,13 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	long decr(String key, long delta, long initValue, long timeout, int exp)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().decr(key, delta, initValue, timeout);
+	long decr(String key, long delta, long initValue, long timeout, int exp) {
+		try {
+			return getMemcachedClient().decr(key, delta, initValue, timeout);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return -1;
+		}
 	}
 
 	/**
@@ -1452,9 +1883,14 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws MemcachedException
 	 */
-	long incr(String key, long delta, long initValue, long timeout, int exp)
-			throws TimeoutException, InterruptedException, MemcachedException {
-		return getMemcachedClient().incr(key, delta, initValue, timeout, exp);
+	long incr(String key, long delta, long initValue, long timeout, int exp) {
+		try {
+			return getMemcachedClient().incr(key, delta, initValue, timeout,
+					exp);
+		} catch (TimeoutException | InterruptedException | MemcachedException e) {
+			logger.error("", e);
+			return -1;
+		}
 	}
 
 	/**
@@ -1553,9 +1989,12 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws TimeoutException
 	 */
-	public void invalidateNamespace(String ns) throws MemcachedException,
-			InterruptedException, TimeoutException {
-		getMemcachedClient().invalidateNamespace(ns);
+	public void invalidateNamespace(String ns) {
+		try {
+			getMemcachedClient().invalidateNamespace(ns);
+		} catch (MemcachedException | InterruptedException | TimeoutException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -1570,9 +2009,12 @@ public abstract class BaseCache<T> {
 	 * @throws InterruptedException
 	 * @throws TimeoutException
 	 */
-	public void invalidateNamespace(String ns, long opTimeout)
-			throws MemcachedException, InterruptedException, TimeoutException {
-		getMemcachedClient().invalidateNamespace(ns, opTimeout);
+	public void invalidateNamespace(String ns, long opTimeout) {
+		try {
+			getMemcachedClient().invalidateNamespace(ns, opTimeout);
+		} catch (MemcachedException | InterruptedException | TimeoutException e) {
+			logger.error("", e);
+		}
 	}
 
 	/**
@@ -1634,8 +2076,12 @@ public abstract class BaseCache<T> {
 	 * @see #endWithNamespace()
 	 * @return
 	 */
-	public T withNamespace(String ns, MemcachedClientCallable<T> callable)
-			throws MemcachedException, InterruptedException, TimeoutException {
-		return getMemcachedClient().withNamespace(ns, callable);
+	public T withNamespace(String ns, MemcachedClientCallable<T> callable) {
+		try {
+			return getMemcachedClient().withNamespace(ns, callable);
+		} catch (MemcachedException | InterruptedException | TimeoutException e) {
+			logger.error("", e);
+			return null;
+		}
 	}
 }
