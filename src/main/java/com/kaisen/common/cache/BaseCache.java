@@ -40,16 +40,15 @@ public abstract class BaseCache<T> {
 
 	private class DefaultKeyProvider implements KeyProvider {
 		private String className;
-		private StringBuilder keyBuilder = new StringBuilder(32);
 
 		public DefaultKeyProvider(String className) {
 			this.className = className;
-			keyBuilder.append(this.className).append(":");
 		}
 
 		@Override
 		public String process(String key) {
-			return keyBuilder.append(key).toString();
+			return new StringBuilder(32).append(this.className).append(":")
+					.append(key).toString();
 		}
 	}
 
